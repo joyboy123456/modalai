@@ -59,15 +59,26 @@ export const generateImage = async (
   const finalSeed = seed ?? Math.floor(Math.random() * 2147483647)
 
   console.log("[v0] Calling Modal API:", endpoint)
-  console.log("[v0] Request params:", { prompt, width, height, steps, seed: finalSeed })
+  console.log("[v0] Request params:", {
+    prompt: prompt.substring(0, 100) + "...",
+    width,
+    height,
+    steps,
+    seed: finalSeed,
+  })
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), enableHD ? 180000 : 120000)
 
   try {
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, width, height, steps, seed: finalSeed }),
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
     console.log("[v0] Response status:", response.status)
 
     if (!response.ok) {
@@ -92,9 +103,13 @@ export const generateImage = async (
       steps: data.steps || steps,
     }
   } catch (error: any) {
+    clearTimeout(timeoutId)
     console.error("[v0] Generate Error:", error.message)
+    if (error.name === "AbortError") {
+      throw new Error("请求超时，请稍后重试。如果使用高清模式，生成时间会更长。")
+    }
     if (error.message === "Failed to fetch") {
-      throw new Error("无法连接到 Modal 服务。请确认 Modal 后端已部署并配置了 CORS OPTIONS 处理器。")
+      throw new Error("网络连接失败，请检查网络后重试。")
     }
     throw error
   }

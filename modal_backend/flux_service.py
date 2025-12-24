@@ -35,6 +35,12 @@ base_image = (
     )
 )
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+}
+
 
 @app.cls(
     image=base_image,
@@ -66,12 +72,18 @@ class ZImageService:
         
         print("Z-Image-Turbo model loaded successfully!")
 
-    @modal.web_endpoint(method="POST")
-    def generate(self, request: dict):
+    @modal.web_endpoint()
+    def generate(self, request: dict = None):
         """Generate image from text prompt"""
         import torch
         import gc
-        from fastapi.responses import JSONResponse
+        from fastapi import Request
+        from fastapi.responses import JSONResponse, Response
+        from starlette.requests import Request as StarletteRequest
+
+        # Handle OPTIONS preflight request
+        if request is None or (isinstance(request, dict) and len(request) == 0):
+            return Response(content="", headers=CORS_HEADERS)
 
         prompt = request.get("prompt", "")
         width = request.get("width", 1024)
@@ -80,7 +92,7 @@ class ZImageService:
         seed = request.get("seed")
 
         if not prompt:
-            return JSONResponse({"error": "Prompt is required"}, headers={"Access-Control-Allow-Origin": "*"})
+            return JSONResponse({"error": "Prompt is required"}, headers=CORS_HEADERS)
 
         width = max(512, min((width // 8) * 8, 2048))
         height = max(512, min((height // 8) * 8, 2048))
@@ -107,7 +119,7 @@ class ZImageService:
         except torch.cuda.OutOfMemoryError:
             torch.cuda.empty_cache()
             gc.collect()
-            return JSONResponse({"error": "GPU out of memory. Try smaller resolution."}, headers={"Access-Control-Allow-Origin": "*"})
+            return JSONResponse({"error": "GPU out of memory. Try smaller resolution."}, headers=CORS_HEADERS)
 
         buffer = io.BytesIO()
         result.save(buffer, format="JPEG", quality=92)
@@ -122,10 +134,10 @@ class ZImageService:
             "width": width,
             "height": height,
             "steps": steps,
-        }, headers={"Access-Control-Allow-Origin": "*"})
+        }, headers=CORS_HEADERS)
 
-    @modal.web_endpoint(method="POST")
-    def upscale(self, request: dict):
+    @modal.web_endpoint()
+    def upscale(self, request: dict = None):
         """Upscale image using Real-ESRGAN"""
         import torch
         import gc
@@ -133,13 +145,17 @@ class ZImageService:
         from PIL import Image
         from realesrgan import RealESRGANer
         from basicsr.archs.rrdbnet_arch import RRDBNet
-        from fastapi.responses import JSONResponse
+        from fastapi.responses import JSONResponse, Response
+
+        # Handle OPTIONS preflight request
+        if request is None or (isinstance(request, dict) and len(request) == 0):
+            return Response(content="", headers=CORS_HEADERS)
 
         image_data = request.get("image", "")
         scale = request.get("scale", 4)
         
         if not image_data:
-            return JSONResponse({"error": "Image is required"}, headers={"Access-Control-Allow-Origin": "*"})
+            return JSONResponse({"error": "Image is required"}, headers=CORS_HEADERS)
         
         scale = 4 if scale >= 3 else 2
         
@@ -183,41 +199,17 @@ class ZImageService:
                 "width": new_size[0],
                 "height": new_size[1],
                 "scale": scale,
-            }, headers={"Access-Control-Allow-Origin": "*"})
+            }, headers=CORS_HEADERS)
             
         except Exception as e:
             torch.cuda.empty_cache()
             gc.collect()
-            return JSONResponse({"error": f"Upscale failed: {str(e)}"}, headers={"Access-Control-Allow-Origin": "*"})
-
-    @modal.web_endpoint(method="OPTIONS")
-    def generate_options(self):
-        from fastapi.responses import Response
-        return Response(
-            content="",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-        )
-
-    @modal.web_endpoint(method="OPTIONS")
-    def upscale_options(self):
-        from fastapi.responses import Response
-        return Response(
-            content="",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-        )
+            return JSONResponse({"error": f"Upscale failed: {str(e)}"}, headers=CORS_HEADERS)
 
     @modal.web_endpoint(method="GET")
     def health(self):
         from fastapi.responses import JSONResponse
-        return JSONResponse({"status": "ok", "model": "z-image-turbo"}, headers={"Access-Control-Allow-Origin": "*"})
+        return JSONResponse({"status": "ok", "model": "z-image-turbo"}, headers=CORS_HEADERS)
 
 
 # ============================================
@@ -226,10 +218,10 @@ class ZImageService:
 
 @app.cls(
     image=base_image,
-    gpu="A100-80GB",  # Use 80GB A100 for large model
+    gpu="A100-80GB",
     timeout=900,
     scaledown_window=300,
-    memory=32768,  # 32GB system memory
+    memory=32768,
 )
 class LayeredService:
     @modal.enter()
@@ -240,43 +232,37 @@ class LayeredService:
 
         print("Loading Qwen-Image-Layered model on A100-80GB...")
         
-        # Load directly to GPU following official example
         self.pipe = QwenImageLayeredPipeline.from_pretrained(
             "Qwen/Qwen-Image-Layered",
             torch_dtype=torch.bfloat16,
         )
-        # Move to GPU directly (official approach)
         self.pipe = self.pipe.to("cuda", torch.bfloat16)
         
         self.pipe.set_progress_bar_config(disable=None)
         print("Qwen-Image-Layered model loaded successfully on GPU!")
 
-    @modal.web_endpoint(method="POST")
-    def decompose(self, request: dict):
+    @modal.web_endpoint()
+    def decompose(self, request: dict = None):
         """Decompose image into RGBA layers"""
         import torch
         import gc
         from PIL import Image
-        from fastapi.responses import JSONResponse
+        from fastapi.responses import JSONResponse, Response
 
-        # CORS headers for all responses
-        cors_headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
-        }
+        # Handle OPTIONS preflight request
+        if request is None or (isinstance(request, dict) and len(request) == 0):
+            return Response(content="", headers=CORS_HEADERS)
 
         image_data = request.get("image", "")
-        num_layers = request.get("layers", 3)  # Default to 3 layers (safer)
-        resolution = request.get("resolution", 512)  # Default to 512 (safer)
+        num_layers = request.get("layers", 3)
+        resolution = request.get("resolution", 512)
         seed = request.get("seed")
         
         if not image_data:
-            return JSONResponse({"error": "Image is required"}, headers={"Access-Control-Allow-Origin": "*"})
+            return JSONResponse({"error": "Image is required"}, headers=CORS_HEADERS)
         
-        # Limit parameters to prevent OOM
-        num_layers = max(2, min(num_layers, 5))  # Max 5 layers instead of 8
-        resolution = min(resolution, 640)  # Max 640 resolution
+        num_layers = max(2, min(num_layers, 5))
+        resolution = min(resolution, 640)
         
         try:
             if image_data.startswith("data:"):
@@ -284,7 +270,6 @@ class LayeredService:
             img_bytes = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
             
-            # Resize input image if too large
             max_input_size = 1024
             if max(img.size) > max_input_size:
                 ratio = max_input_size / max(img.size)
@@ -297,10 +282,8 @@ class LayeredService:
             if seed is None:
                 seed = torch.randint(0, 2**31, (1,)).item()
             
-            # Use CUDA generator as per official example
             generator = torch.Generator(device='cuda').manual_seed(int(seed))
             
-            # Memory cleanup before inference
             torch.cuda.empty_cache()
             gc.collect()
             
@@ -341,27 +324,15 @@ class LayeredService:
                 "num_layers": len(layers_base64),
                 "seed": seed,
                 "resolution": resolution,
-            }, headers={"Access-Control-Allow-Origin": "*"})
+            }, headers=CORS_HEADERS)
             
         except torch.cuda.OutOfMemoryError:
             torch.cuda.empty_cache()
             gc.collect()
-            return JSONResponse({"error": "GPU out of memory. Try fewer layers or lower resolution."}, headers={"Access-Control-Allow-Origin": "*"})
+            return JSONResponse({"error": "GPU out of memory. Try fewer layers or lower resolution."}, headers=CORS_HEADERS)
         except Exception as e:
             torch.cuda.empty_cache()
             gc.collect()
             import traceback
             traceback.print_exc()
-            return JSONResponse({"error": f"Decomposition failed: {str(e)}"}, headers={"Access-Control-Allow-Origin": "*"})
-
-    @modal.web_endpoint(method="OPTIONS")
-    def decompose_options(self):
-        from fastapi.responses import Response
-        return Response(
-            content="",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-        )
+            return JSONResponse({"error": f"Decomposition failed: {str(e)}"}, headers=CORS_HEADERS)

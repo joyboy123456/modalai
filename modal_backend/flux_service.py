@@ -20,8 +20,8 @@ base_image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "libgl1", "libglib2.0-0")
     .pip_install(
-        "torch",
-        "torchvision",
+        "torch==2.1.2",
+        "torchvision==0.16.2",
         "git+https://github.com/huggingface/diffusers",
         "transformers>=4.51.3",
         "accelerate",
@@ -30,7 +30,7 @@ base_image = (
         "fastapi[standard]",
         "realesrgan",
         "opencv-python-headless",
-        "basicsr",
+        "basicsr==1.4.2",
         "gfpgan",
         "python-pptx",
     )

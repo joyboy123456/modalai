@@ -20,9 +20,10 @@ base_image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "libgl1", "libglib2.0-0")
     .pip_install(
-        "torch==2.1.2",
-        "torchvision==0.16.2",
-        "git+https://github.com/huggingface/diffusers",
+        "numpy<2",
+        "torch==2.4.0",
+        "torchvision==0.19.0",
+        "diffusers==0.30.0",
         "transformers>=4.51.3",
         "accelerate",
         "safetensors",

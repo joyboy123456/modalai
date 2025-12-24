@@ -1,15 +1,15 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { GeneratedImage } from '../types';
-import { ChevronLeft, ChevronRight, Film, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HistoryGalleryProps {
-  images: GeneratedImage[];
+  history: GeneratedImage[];
+  currentImage: GeneratedImage | null;
   onSelect: (image: GeneratedImage) => void;
-  selectedId?: string;
+  t: any;
 }
 
-export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect, selectedId }) => {
+export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ history, currentImage, onSelect, t }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -17,14 +17,12 @@ export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect
   const checkScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      // Use a small tolerance (10px) for fractional pixel issues
       setCanScrollLeft(scrollLeft > 10);
       setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 10);
     }
   };
 
   useEffect(() => {
-    // Force reset scroll to start (0) whenever images change.
     const timer = setTimeout(() => {
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollLeft = 0;
@@ -37,7 +35,7 @@ export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect
         window.removeEventListener('resize', checkScroll);
         clearTimeout(timer);
     };
-  }, [images]);
+  }, [history]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -53,7 +51,7 @@ export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect
     }
   };
 
-  if (images.length === 0) return null;
+  if (history.length === 0) return null;
 
   return (
     <div className="relative mt-4 w-full">
@@ -73,13 +71,13 @@ export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect
                 onScroll={checkScroll}
                 className="flex items-center gap-3 p-3 overflow-x-auto scrollbar-hide snap-x"
             >
-            {images.map((img) => (
+            {history.map((img) => (
                 <div
                 key={img.id}
                 onClick={() => onSelect(img)}
                 className={`
                     relative group flex-shrink-0 h-24 w-24 rounded-lg overflow-hidden cursor-pointer transition-all snap-start select-none
-                    ${selectedId === img.id ? 'ring-2 ring-purple-400 ring-offset-2 ring-offset-[#0D0B14]' : 'ring-2 ring-transparent hover:ring-white/50'}
+                    ${currentImage?.id === img.id ? 'ring-2 ring-purple-400 ring-offset-2 ring-offset-[#0D0B14]' : 'ring-2 ring-transparent hover:ring-white/50'}
                 `}
                 >
                 <img
@@ -89,21 +87,6 @@ export const HistoryGallery: React.FC<HistoryGalleryProps> = ({ images, onSelect
                     loading="lazy"
                     onContextMenu={(e) => e.preventDefault()}
                 />
-                
-                {/* Live Video Indicator */}
-                {img.videoUrl && (
-                    <div className="absolute top-1 right-1 bg-black/60 rounded-full p-1 border border-white/20">
-                        <Film className="w-3 h-3 text-white" />
-                    </div>
-                )}
-                
-                {/* Generating Loading Indicator */}
-                {img.videoStatus === 'generating' && (
-                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                         <Loader2 className="w-6 h-6 text-white/80 animate-spin" />
-                     </div>
-                )}
-                
                 </div>
             ))}
             </div>

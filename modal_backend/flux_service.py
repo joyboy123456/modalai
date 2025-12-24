@@ -21,6 +21,7 @@ base_image = (
     .apt_install("git", "libgl1", "libglib2.0-0")
     .pip_install(
         "torch",
+        "torchvision",
         "git+https://github.com/huggingface/diffusers",
         "transformers>=4.51.3",
         "accelerate",

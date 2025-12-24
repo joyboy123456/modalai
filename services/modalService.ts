@@ -1,23 +1,19 @@
 import { GeneratedImage, AspectRatioOption } from "../types";
 import { generateUUID } from "./utils";
 
-// Use Vercel API proxy in production, direct Modal API in development
-const IS_PRODUCTION = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
-
-const ENDPOINT_STORAGE_KEY = "modalEndpoint";
-const DEFAULT_MODAL_ENDPOINT = "https://joyboyjoyboy488-53207--z-image-service-zimageservice-generate.modal.run";
-const VERCEL_GENERATE_ENDPOINT = "/api/generate";
+// API 端点 - 直接调用 Modal
+const MODAL_ENDPOINTS = {
+  generate: 'https://joyboyjoyboy488-53207--z-image-service-zimageservice-generate.modal.run',
+  upscale: 'https://joyboyjoyboy488-53207--z-image-service-zimageservice-upscale.modal.run',
+  decompose: 'https://joyboyjoyboy488-53207--z-image-service-layeredservice-decompose.modal.run',
+};
 
 export const getModalEndpoint = (): string => {
-  if (IS_PRODUCTION) return VERCEL_GENERATE_ENDPOINT;
-  if (typeof localStorage === "undefined") return DEFAULT_MODAL_ENDPOINT;
-  return localStorage.getItem(ENDPOINT_STORAGE_KEY) || DEFAULT_MODAL_ENDPOINT;
+  return MODAL_ENDPOINTS.generate;
 };
 
 export const saveModalEndpoint = (endpoint: string) => {
-  if (typeof localStorage !== "undefined") {
-    localStorage.setItem(ENDPOINT_STORAGE_KEY, endpoint.trim());
-  }
+  // 保留接口兼容性，但不再使用
 };
 
 const getBaseDimensions = (ratio: AspectRatioOption) => {
@@ -86,11 +82,7 @@ export const upscaleImage = async (
   imageData: string,
   scale: number = 4
 ): Promise<{ image: string; width: number; height: number }> => {
-  const endpoint = IS_PRODUCTION 
-    ? "/api/upscale" 
-    : getModalEndpoint().replace(/generate$/, "upscale");
-
-  const response = await fetch(endpoint, {
+  const response = await fetch(MODAL_ENDPOINTS.upscale, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ image: imageData, scale }),
@@ -107,9 +99,7 @@ export const upscaleImage = async (
   return { image: data.image, width: data.width, height: data.height };
 };
 
-// Layered Service Endpoint - use Vercel API proxy in production
-const MODAL_LAYERED_ENDPOINT = "https://joyboyjoyboy488-53207--z-image-service-layeredservice-decompose.modal.run";
-const getLayeredEndpoint = () => IS_PRODUCTION ? "/api/decompose" : MODAL_LAYERED_ENDPOINT;
+
 
 export interface LayerResult {
   index: number;
@@ -138,7 +128,7 @@ export const decomposeImage = async (
   console.log(`[Decompose] Request size: ${(requestBody.length / 1024 / 1024).toFixed(2)} MB`);
 
   try {
-    const response = await fetch(getLayeredEndpoint(), {
+    const response = await fetch(MODAL_ENDPOINTS.decompose, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: requestBody,

@@ -8,12 +8,12 @@ export const Logo = ({ className }: { className?: string }) => {
       stroke="currentColor"
       className={className}
     >
-      <g fill="none" fill-rule="evenodd" transform="translate(40 10)">
-        <path stroke-linecap="square" stroke-linejoin="round" stroke-width="8" d="M94 118a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V40a8 8 0 0 1 8-8"/>
-        <path stroke-linecap="round" stroke-width="8" d="m93.5 77.5.95 37.988M7 32.5h43.5"/>
-        <path fill="currentColor" stroke="none" fill-rule="nonzero" d="m14 103 17.25-22.667 17.25 17L65.75 69 83 103z"/>
-        <circle cx="32.5" cy="60.5" r="7.5" fill="currentColor" stroke="none" fill-rule="nonzero"/>
-        <path fill="currentColor" stroke="none" fill-rule="nonzero" d="M93.555 0c0 19.054-15.413 34.5-34.427 34.5 19.014 0 34.427 15.446 34.427 34.5 0-19.054 15.414-34.5 34.428-34.5-19.014 0-34.428-15.446-34.428-34.5"/>
+      <g fill="none" fillRule="evenodd" transform="translate(40 10)">
+        <path strokeLinecap="square" strokeLinejoin="round" strokeWidth="8" d="M94 118a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V40a8 8 0 0 1 8-8"/>
+        <path strokeLinecap="round" strokeWidth="8" d="m93.5 77.5.95 37.988M7 32.5h43.5"/>
+        <path fill="currentColor" stroke="none" fillRule="nonzero" d="m14 103 17.25-22.667 17.25 17L65.75 69 83 103z"/>
+        <circle cx="32.5" cy="60.5" r="7.5" fill="currentColor" stroke="none" fillRule="nonzero"/>
+        <path fill="currentColor" stroke="none" fillRule="nonzero" d="M93.555 0c0 19.054-15.413 34.5-34.427 34.5 19.014 0 34.427 15.446 34.427 34.5 0-19.054 15.414-34.5 34.428-34.5-19.014 0-34.428-15.446-34.428-34.5"/>
       </g>
     </svg>
 }

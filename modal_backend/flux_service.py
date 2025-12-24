@@ -190,6 +190,30 @@ class ZImageService:
             gc.collect()
             return JSONResponse({"error": f"Upscale failed: {str(e)}"}, headers={"Access-Control-Allow-Origin": "*"})
 
+    @modal.web_endpoint(method="OPTIONS")
+    def generate_options(self):
+        from fastapi.responses import Response
+        return Response(
+            content="",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+        )
+
+    @modal.web_endpoint(method="OPTIONS")
+    def upscale_options(self):
+        from fastapi.responses import Response
+        return Response(
+            content="",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+        )
+
     @modal.web_endpoint(method="GET")
     def health(self):
         from fastapi.responses import JSONResponse
@@ -330,12 +354,14 @@ class LayeredService:
             traceback.print_exc()
             return JSONResponse({"error": f"Decomposition failed: {str(e)}"}, headers={"Access-Control-Allow-Origin": "*"})
 
-    @modal.web_endpoint(method="GET")
-    def health(self):
-        from fastapi.responses import JSONResponse
-        return JSONResponse({
-            "status": "ok", 
-            "model": "qwen-image-layered",
-            "max_layers": 8,
-            "resolutions": [640, 1024]
-        }, headers={"Access-Control-Allow-Origin": "*"})
+    @modal.web_endpoint(method="OPTIONS")
+    def decompose_options(self):
+        from fastapi.responses import Response
+        return Response(
+            content="",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+        )

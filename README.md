@@ -1,5 +1,3 @@
-
-
 # Peinture (Free AI Image Gen)
 
 ![Stars](https://img.shields.io/github/stars/Amery2010/peinture?style=flat-square)
@@ -57,20 +55,20 @@ A sleek, dark-themed AI image generator built with React, TypeScript, and Tailwi
 ### Installation
 
 1. Clone the repository:
-   ```bash
+   \`\`\`bash
    git clone https://github.com/Amery2010/peinture.git
    cd peinture
-   ```
+   \`\`\`
 
 2. Install dependencies:
-   ```bash
+   \`\`\`bash
    npm install
-   ```
+   \`\`\`
 
 3. Start the development server:
-   ```bash
+   \`\`\`bash
    npm run dev
-   ```
+   \`\`\`
 
 4. Open your browser at `http://localhost:5173`.
 
@@ -83,14 +81,14 @@ This project is a static Single Page Application (SPA), making it easy to deploy
 Vercel is optimized for frontend frameworks and requires zero configuration.
 
 1. Install Vercel CLI:
-   ```bash
+   \`\`\`bash
    npm i -g vercel
-   ```
+   \`\`\`
 
 2. Run the deploy command from the project root:
-   ```bash
+   \`\`\`bash
    vercel
-   ```
+   \`\`\`
 
 3. Follow the prompts. Vercel will automatically detect Vite and set the build command to `npm run build` and the output directory to `dist`.
 
@@ -118,9 +116,9 @@ Cloudflare Pages is the best way to host static assets on the Cloudflare network
 To host on any standard web server or CDN:
 
 1. Build the project locally:
-   ```bash
+   \`\`\`bash
    npm run build
-   ```
+   \`\`\`
 
 2. This will generate a `dist` folder containing `index.html` and bundled assets.
 
@@ -188,7 +186,7 @@ If you have forked this project, you can use GitHub Actions to automatically syn
 1. In your forked repository, create a new file at `.github/workflows/sync.yml`.
 2. Paste the following content into the file:
 
-```yaml
+\`\`\`yaml
 name: Upstream Sync
 
 permissions:
@@ -228,7 +226,7 @@ jobs:
         run: |
           echo "[Error] Due to a change in the workflow file of the upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork."
           exit 1
-```
+\`\`\`
 
 3. Commit the changes. Your fork will now check for updates daily and sync automatically.
 

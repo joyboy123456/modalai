@@ -1,4 +1,3 @@
-
 import { CustomProvider, ServiceMode } from "../types";
 
 export function generateUUID(): string {

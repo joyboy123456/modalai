@@ -10,31 +10,31 @@
 
 ### 1. 安装 Modal CLI
 
-```bash
+\`\`\`bash
 pip install modal
-```
+\`\`\`
 
 ### 2. 登录 Modal
 
-```bash
+\`\`\`bash
 modal token new
-```
+\`\`\`
 
 这会打开浏览器让你授权。
 
 ### 3. 部署服务
 
-```bash
+\`\`\`bash
 modal deploy modal_backend/flux_service.py
-```
+\`\`\`
 
 部署成功后，你会看到类似这样的输出：
 
-```
+\`\`\`
 ✓ Created objects.
 ├── 🔨 Created FluxService.generate => https://your-username--flux-image-service-fluxservice-generate.modal.run
 └── 🔨 Created FluxService.health => https://your-username--flux-image-service-fluxservice-health.modal.run
-```
+\`\`\`
 
 ### 4. 配置前端
 
@@ -45,9 +45,9 @@ modal deploy modal_backend/flux_service.py
 
 ## 本地测试
 
-```bash
+\`\`\`bash
 modal serve modal_backend/flux_service.py
-```
+\`\`\`
 
 这会启动一个本地开发服务器，方便调试。
 
@@ -68,7 +68,7 @@ modal serve modal_backend/flux_service.py
 生成图片
 
 **请求体：**
-```json
+\`\`\`json
 {
   "prompt": "A beautiful sunset over mountains",
   "width": 1024,
@@ -76,10 +76,10 @@ modal serve modal_backend/flux_service.py
   "steps": 4,
   "seed": 12345
 }
-```
+\`\`\`
 
 **响应：**
-```json
+\`\`\`json
 {
   "image": "data:image/png;base64,...",
   "seed": 12345,
@@ -87,19 +87,19 @@ modal serve modal_backend/flux_service.py
   "height": 1024,
   "steps": 4
 }
-```
+\`\`\`
 
 ### GET /health
 
 健康检查
 
 **响应：**
-```json
+\`\`\`json
 {
   "status": "ok",
   "model": "flux-1-schnell"
 }
-```
+\`\`\`
 
 ## 常见问题
 
@@ -107,11 +107,11 @@ modal serve modal_backend/flux_service.py
 
 可以调整 `container_idle_timeout` 参数，让容器保持更长时间：
 
-```python
+\`\`\`python
 @app.cls(
     container_idle_timeout=300,  # 5 分钟
 )
-```
+\`\`\`
 
 ### Q: 如何添加鉴权？
 
@@ -120,8 +120,8 @@ modal serve modal_backend/flux_service.py
 
 ### Q: 如何查看日志？
 
-```bash
+\`\`\`bash
 modal app logs flux-image-service
-```
+\`\`\`
 
 或在 Modal Dashboard 查看。

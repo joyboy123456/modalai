@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { History, Languages, Loader2, Wand2 } from 'lucide-react';
 import { Tooltip } from './Tooltip';

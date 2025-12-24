@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { X, ChevronDown, KeyRound, HelpCircle, ExternalLink, Shield, Zap, Database, Globe, CloudUpload, Github, Languages, Wand2, Film, PencilRuler, HardDrive } from 'lucide-react';
 

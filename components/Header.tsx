@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Logo } from './Icons';
 import { Tooltip } from './Tooltip';
 import {
@@ -9,10 +9,12 @@ import {
   Github,
   PencilRuler,
   ChevronDown,
-  Check
+  Check,
+  Image as ImageIcon
 } from 'lucide-react';
+import { isStorageConfigured } from '../services/storageService';
 
-export type AppView = 'creation' | 'editor';
+export type AppView = 'creation' | 'editor' | 'gallery';
 
 interface HeaderProps {
   currentView: AppView;
@@ -31,25 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  const NavLink = ({ view, label, icon: Icon }: { view: AppView, label: string, icon: any }) => (
-      <button
-          onClick={() => {
-              setCurrentView(view);
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              currentView === view 
-              ? 'bg-purple-600/20 text-purple-400 border border-purple-500/20' 
-              : 'text-white/60 hover:text-white hover:bg-white/5'
-          }`}
-      >
-          <Icon className="w-4 h-4" />
-          {label}
-      </button>
-  );
-
   return (
     <header className="w-full backdrop-blur-md sticky top-0 z-50 bg-background-dark/30 border-b border-white/5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 md:px-8 md:py-4 relative">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-2 py-3 md:px-8 md:py-4 relative">
         
         {/* Logo & Title - Visible on all devices */}
         <div className="flex items-center gap-2 text-white shrink-0">
@@ -66,10 +52,13 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentView === 'creation' ? <>
                   <Sparkles className="w-4 h-4" />
                   {t.nav_creation}
-                </> : <>
+                </> : (currentView === 'editor' ? <>
                   <PencilRuler className="w-4 h-4" />
                   {t.nav_editor}
-                </>}
+                </> : <>
+                  <ImageIcon className="w-4 h-4" />
+                  {t.nav_gallery}
+                </>)}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMobileNavOpen ? 'rotate-180' : ''}`} />
             </button>
             
@@ -97,15 +86,58 @@ export const Header: React.FC<HeaderProps> = ({
                             {t.nav_editor}
                             {currentView === 'editor' && <Check className="w-3.5 h-3.5 ml-auto" />}
                         </button>
+                        <button
+                            onClick={() => { setCurrentView('gallery'); setIsMobileNavOpen(false); }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${currentView === 'gallery' ? 'bg-purple-600/20 text-purple-400' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}
+                        >
+                            <ImageIcon className="w-4 h-4" />
+                            {t.nav_gallery}
+                            {currentView === 'gallery' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                        </button>
                     </div>
                 </>
             )}
         </div>
 
-        {/* Desktop: Navigation (Centered) */}
-        <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
-            <NavLink view="creation" label={t.nav_creation} icon={Sparkles} />
-            <NavLink view="editor" label={t.nav_editor} icon={PencilRuler} />
+        {/* Desktop: Sliding Pill Navigation (Centered) */}
+        <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
+            <div className="relative flex items-center bg-black/20 border border-white/10 rounded-full p-1 w-[300px]">
+                {/* Background Sliding Pill */}
+                <div 
+                    className={`absolute top-1 bottom-1 rounded-full bg-purple-600 shadow-lg shadow-purple-900/30 transition-all duration-300 ease-out z-0 w-[calc(33.33%-4px)]
+                    ${currentView === 'creation' ? 'left-1' : 
+                      (currentView === 'editor' ? 'left-[calc(33.33%+2px)]' : 
+                      'left-[calc(66.66%+2px)]')}
+                    `}
+                />
+                
+                {/* Creation Button */}
+                <button 
+                    onClick={() => setCurrentView('creation')}
+                    className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-1.5 text-sm font-medium transition-colors duration-300 ${currentView === 'creation' ? 'text-white' : 'text-white/60 hover:text-white/90'}`}
+                >
+                    <Sparkles className="w-4 h-4" />
+                    {t.nav_creation}
+                </button>
+
+                {/* Editor Button */}
+                <button 
+                    onClick={() => setCurrentView('editor')}
+                    className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-1.5 text-sm font-medium transition-colors duration-300 ${currentView === 'editor' ? 'text-white' : 'text-white/60 hover:text-white/90'}`}
+                >
+                    <PencilRuler className="w-4 h-4" />
+                    {t.nav_editor}
+                </button>
+
+                {/* Gallery Button */}
+                <button 
+                    onClick={() => setCurrentView('gallery')}
+                    className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-1.5 text-sm font-medium transition-colors duration-300 ${currentView === 'gallery' ? 'text-white' : 'text-white/60 hover:text-white/90'}`}
+                >
+                    <ImageIcon className="w-4 h-4" />
+                    {t.nav_gallery}
+                </button>
+            </div>
         </div>
         
         {/* Actions */}

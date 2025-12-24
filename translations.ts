@@ -6,6 +6,7 @@ export const translations = {
     appTitle: "Peinture",
     nav_creation: "Creation",
     nav_editor: "Editor",
+    nav_gallery: "Gallery",
     editor_coming_soon: "Image Editor Coming Soon",
     editor_desc: "We are building powerful tools to edit and remix your images.",
     prompt: "Prompt",
@@ -30,20 +31,24 @@ export const translations = {
     copy: "COPY",
     copied: "COPIED",
     download: "Download",
+    upload: "Upload to Cloud",
+    uploading: "Uploading...",
+    upload_success: "Uploaded successfully",
+    upload_failed: "Upload failed",
     delete: "Delete Image",
     details: "Details & Prompt",
     toggleBlur: "Toggle Blur / NSFW",
     settings: "Settings",
     help: "FAQ",
-    hfToken: "Hugging Face Token",
+    hfToken: "Access Token",
     hfTokenHelp: "Optional. Provide multiple tokens. Get",
     hfTokenLink: "Access Token",
     hfTokenHelpEnd: "to increase free quota.",
-    giteeToken: "Gitee AI Token",
+    giteeToken: "Access Token",
     giteeTokenHelp: "Required. Provide multiple tokens. Get",
     giteeTokenLink: "Access Token",
     giteeTokenHelpEnd: "from dashboard.",
-    msToken: "Model Scope Token",
+    msToken: "Access Token",
     msTokenHelp: "Required. Provide multiple tokens. Get",
     msTokenLink: "Access Token",
     msTokenHelpEnd: "from dashboard.",
@@ -81,10 +86,52 @@ export const translations = {
     liveGeneratingDesc: "Generating Video Description...",
     liveError: "Video Generation Failed",
 
+    // Service Mode
+    service_mode: "Service Mode",
+    mode_local: "Local",
+    mode_server: "Server",
+    mode_hydration: "Hydration",
+    access_password_title: "Authentication Required",
+    access_password_desc: "The server requires an access password to proceed.",
+    access_password_placeholder: "Enter Access Password",
+    access_password_invalid: "Invalid Password",
+    switch_to_local: "Switch to Local Mode",
+
     // Tabs
     tab_general: "General",
+    tab_provider: "Providers",
     tab_prompt: "Prompt",
     tab_live: "Live",
+    tab_storage: "S3 Storage", // Kept for legacy if needed, but UI uses dynamic label
+    tab_webdav: "WebDAV",
+
+    // Storage
+    storage_service: "Storage Service",
+    storage_off: "Off",
+    storage_s3: "S3 Storage",
+    storage_webdav: "WebDAV",
+    
+    s3_access_key: "Access Key ID",
+    s3_secret_key: "Secret Access Key",
+    s3_bucket: "Bucket Name (Optional)",
+    s3_region: "Region (Optional)",
+    s3_endpoint: "Endpoint (Optional)",
+    s3_domain: "Public Domain (Optional)",
+    s3_prefix: "File Prefix",
+    s3_domain_placeholder: "e.g., https://cdn.example.com",
+    s3_endpoint_placeholder: "e.g., https://s3.us-east-1.amazonaws.com",
+    s3_prefix_placeholder: "Default: peinture/",
+
+    webdav_url: "WebDAV URL",
+    webdav_username: "Username",
+    webdav_password: "Password",
+    webdav_directory: "Directory",
+    webdav_url_placeholder: "e.g., https://dav.example.com",
+    test_connection: "Test Connection",
+    testing: "Testing...",
+    test_success: "Connection Successful",
+    test_fail: "Connection Failed",
+    mixed_content_error: "Security Error: Cannot connect to HTTP WebDAV server from HTTPS website.",
 
     // Live Settings
     videoPrompt: "Live Prompt",
@@ -92,15 +139,49 @@ export const translations = {
     videoSteps: "Steps",
     videoGuidance: "Guidance",
     seconds: "s",
-    modelWan2: "Wan 2.1",
+    modelWan2: "Wan 2.2",
     liveNotSupported: "Live Video is not supported for this provider yet.",
 
     // System Prompts
-    systemPrompts: "Role Setting",
+    systemPrompts: "Prompt Optimization",
+    translationPrompt: "Translation Prompt",
     promptContent: "Prompt Content",
     restoreDefault: "Restore Default",
     systemPromptHelp: "Customize the role setting used for prompt optimization.",
+    translationPromptHelp: "Customize the role setting used for prompt translation.",
     optimizationModel: "Current Model",
+
+    // Providers
+    provider_huggingface: "Hugging Face",
+    provider_gitee: "Gitee AI",
+    provider_modelscope: "Model Scope",
+    
+    // Custom Providers
+    add_provider: "Add Provider",
+    custom_providers: "Custom Providers",
+    provider_name: "Provider Name",
+    api_url: "API URL",
+    api_token: "API Token (Optional)",
+    get_models: "Get Model List",
+    fetch_status_idle: "Get Models",
+    fetch_status_loading: "Fetching...",
+    fetch_status_success: "Success",
+    fetch_status_failed: "Failed",
+    no_models_found: "No models found",
+    models_count: "{count} models found",
+
+    // Models Labels
+    model_creation: "Creation Model",
+    model_edit: "Edit Model",
+    model_live: "Live Model",
+    model_text: "Prompt Optimization",
+
+    // General Tab
+    openSource: "Open Source Code",
+    openSourceDesc: "Released under the MIT License. Open source and free forever.",
+    clearData: "Clear Data",
+    clearDataDesc: "Reset all parameters and clear local storage data.",
+    clearDataConfirm: "Are you sure you want to clear all data and reset the app? This action cannot be undone.",
 
     // Errors
     error_quota_exhausted: "Your today's quota has been used up. You can set up Hugging Face Token to get more quota.",
@@ -115,6 +196,14 @@ export const translations = {
     error_prompt_optimization_failed: "Failed to optimize prompt. Please try again.",
     error_upscale_failed: "Failed to upscale image.",
     error_translation_failed: "Translation failed. Proceeding with original prompt.",
+    error_s3_upload_failed: "Failed to upload to S3. Check your configuration.",
+    error_s3_config_missing: "S3 configuration is missing. Please set Access Key and Secret Key.",
+    error_s3_delete_failed: "Failed to delete file from S3.",
+    error_webdav_upload_failed: "Failed to upload to WebDAV.",
+    error_webdav_config_missing: "WebDAV configuration missing.",
+    error_webdav_delete_failed: "Failed to delete file from WebDAV.",
+    error_storage_config_missing: "Storage configuration is missing.",
+    error_rename_failed: "Failed to rename file.",
 
     // FAQ
     faq_q1: "Is this service free to use?",
@@ -138,9 +227,11 @@ export const translations = {
     faq_q7: "How does Prompt Optimization work?",
     faq_a7: "We use powerful LLMs to expand your short ideas into detailed, artistically rich prompts. Depending on the provider, we use models like DeepSeek or OpenAI. You can customize the 'Role Setting' in the Settings menu to control how the AI rewrites your prompts.",
     faq_q8: "How does Live Image work?",
-    faq_a8: "The Live feature transforms static images into dynamic short videos. By leveraging advanced Image-to-Video models (such as Wan2.2), the AI analyzes the scene's composition to generate natural motion and cinematic effects, bringing your creation to life. Currently, only Hugging Face and Gitee AI are supported.",
+    faq_a8: "The Live feature transforms static images into dynamic short videos. By leveraging advanced Image-to-Video models (such as Wan2.2), the AI analyzes the scene's composition to generate natural motion and cinematic effects, bringing your creation to life. Currently, only Hugging Face and Gitee AI are supported. Use the newly added Right-Slide on Settings Tab to explore more!",
     faq_q9: "How does the Image Editor work?",
     faq_a9: "The Image Editor allows you to modify existing images using AI. You can draw on a transparent layer (using Brush or Rectangle tools) to indicate where you want changes, then provide an AI command. The system merges your drawings with the original image and sends them to the Qwen-Image-Edit model. You can also upload up to 3 reference images to guide the AI's artistic style or content.",
+    faq_q10: "How do Cloud Storage Services work?",
+    faq_a10: "We support S3-compatible storage (like AWS S3, Cloudflare R2, MinIO) and WebDAV. You can configure your own storage credentials in Settings > Storage. Once configured, you can upload your generated images/videos directly to your personal cloud. Your credentials are encrypted and stored locally in your browser; they are never uploaded to our servers.",
     footer_license: "Released under the MIT License. Open source and free forever.",
 
     // Aspect Ratios
@@ -164,7 +255,7 @@ export const translations = {
     upload_image_cta: "Upload Image to Edit",
     editor_placeholder: "Describe edits...",
     editor_generate: "Generate",
-    re_edit: "Re-edit",
+    re_edit: "Return",
     
     // New Editor Strings
     upload_ref_image: "Upload Reference Image",
@@ -178,8 +269,12 @@ export const translations = {
     menu_exit: "Exit Editor",
     
     select_from_history: "Select from History",
+    select_from_gallery: "Select from Cloud Gallery",
     history_modal_title: "Select Generated Image",
+    gallery_modal_title: "Select from Cloud Gallery",
     no_history_images: "No generated images found in history.",
+    no_gallery_images: "No images found in cloud storage.",
+    load_more: "Load More",
 
     // Shortcuts
     shortcuts_title: "Keyboard Shortcuts",
@@ -199,11 +294,37 @@ export const translations = {
     exit_dialog_title: "Exit Editor?",
     exit_dialog_desc: "This will clear your current canvas and history. Are you sure?",
     or_conjunction: " or ",
+
+    // Comparison Labels
+    compare_original: "Original",
+    compare_upscaled: "Upscaled 4x",
+    compare_edited: "Edited",
+
+    // Cloud Gallery
+    gallery_title: "Your Creations",
+    gallery_subtitle: "Explore your generated masterpiece collection",
+    upload_media: "Upload Media",
+    cloud_gallery_empty: "No Cloud Images",
+    cloud_gallery_desc: "Upload images to cloud storage to see them here.",
+    
+    // Gallery Setup Guide
+    gallery_setup_title: "Configure Cloud Gallery",
+    gallery_setup_desc: "Connect your S3 or WebDAV storage to view your generated creations anywhere.",
+    gallery_setup_btn: "Configure Storage",
+
+    share_link: "Share Link",
+    share_success: "Link copied!",
+    delete_confirm: "Are you sure you want to delete this file?",
+    copy_prompt: "Copy Prompt",
+    toggle_nsfw: "Toggle NSFW",
+    mark_nsfw: "Mark as NSFW",
+    unmark_nsfw: "Unmark NSFW",
   },
   zh: {
     appTitle: "派奇智图",
     nav_creation: "创作",
     nav_editor: "编辑",
+    nav_gallery: "画廊",
     editor_coming_soon: "图片编辑功能即将上线",
     editor_desc: "我们正在打造强大的工具，帮助您编辑和重组图片。",
     prompt: "提示词",
@@ -228,20 +349,24 @@ export const translations = {
     copy: "复制",
     copied: "已复制",
     download: "下载",
+    upload: "上传云端",
+    uploading: "上传中...",
+    upload_success: "上传成功",
+    upload_failed: "上传失败",
     delete: "删除图片",
     details: "详情与提示词",
     toggleBlur: "切换模糊 / NSFW",
     settings: "设置",
     help: "常见问题",
-    hfToken: "Hugging Face 令牌",
+    hfToken: "访问令牌",
     hfTokenHelp: "可选。支持多个令牌。获取",
     hfTokenLink: "访问令牌",
     hfTokenHelpEnd: "以获得更多免费配额。",
-    giteeToken: "Gitee AI 令牌",
+    giteeToken: "访问令牌",
     giteeTokenHelp: "必需。支持多个令牌。获取",
     giteeTokenLink: "访问令牌",
     giteeTokenHelpEnd: "从控制台。",
-    msToken: "Model Scope 令牌",
+    msToken: "访问令牌",
     msTokenHelp: "必需。支持多个令牌。获取",
     msTokenLink: "访问令牌",
     msTokenHelpEnd: "从控制台。",
@@ -279,10 +404,52 @@ export const translations = {
     liveGeneratingDesc: "生成视频描述中...",
     liveError: "视频生成失败",
     
+    // Service Mode
+    service_mode: "服务模式",
+    mode_local: "本地",
+    mode_server: "服务器",
+    mode_hydration: "融合",
+    access_password_title: "需要认证",
+    access_password_desc: "服务器需要访问密码才能继续。",
+    access_password_placeholder: "输入访问密码",
+    access_password_invalid: "密码无效",
+    switch_to_local: "切换到本地模式",
+
     // Tabs
     tab_general: "通用",
+    tab_provider: "服务商",
     tab_prompt: "提示词",
     tab_live: "Live 图",
+    tab_storage: "S3 存储",
+    tab_webdav: "WebDAV",
+
+    // Storage
+    storage_service: "存储服务",
+    storage_off: "关闭",
+    storage_s3: "S3 存储",
+    storage_webdav: "WebDAV",
+
+    s3_access_key: "访问 ID",
+    s3_secret_key: "访问密钥",
+    s3_bucket: "存储桶名称 (可选)",
+    s3_region: "区域 (可选)",
+    s3_endpoint: "端点 (可选)",
+    s3_domain: "访问域名 (可选)",
+    s3_prefix: "文件前缀",
+    s3_domain_placeholder: "例如: https://cdn.example.com",
+    s3_endpoint_placeholder: "例如: https://s3.us-east-1.amazonaws.com",
+    s3_prefix_placeholder: "默认: peinture/",
+
+    webdav_url: "WebDAV 地址",
+    webdav_username: "用户名",
+    webdav_password: "密码",
+    webdav_directory: "存储目录",
+    webdav_url_placeholder: "例如: https://dav.example.com",
+    test_connection: "连接测试",
+    testing: "测试中...",
+    test_success: "连接成功",
+    test_fail: "连接失败",
+    mixed_content_error: "安全错误：无法从 HTTPS 网站连接到 HTTP WebDAV 服务器。",
 
     // Live Settings
     videoPrompt: "Live 提示词",
@@ -294,11 +461,45 @@ export const translations = {
     liveNotSupported: "当前服务商暂不支持 Live 图功能。",
 
     // System Prompts
-    systemPrompts: "角色设定",
+    systemPrompts: "提示词优化",
+    translationPrompt: "提示词翻译",
     promptContent: "提示词内容",
     restoreDefault: "恢复默认内容",
     systemPromptHelp: "自定义用于提示词优化的角色设定。",
+    translationPromptHelp: "自定义用于自动翻译的角色设定。",
     optimizationModel: "当前模型",
+
+    // Providers
+    provider_huggingface: "Hugging Face",
+    provider_gitee: "Gitee AI",
+    provider_modelscope: "Model Scope",
+
+    // Custom Providers
+    add_provider: "新增服务商",
+    custom_providers: "自定义服务商",
+    provider_name: "服务商名称",
+    api_url: "API 地址",
+    api_token: "API 令牌 (可选)",
+    get_models: "获取模型列表",
+    fetch_status_idle: "获取模型",
+    fetch_status_loading: "获取中...",
+    fetch_status_success: "成功",
+    fetch_status_failed: "失败",
+    no_models_found: "未找到模型",
+    models_count: "找到 {count} 个模型",
+
+    // Models Labels
+    model_creation: "创作模型",
+    model_edit: "编辑模型",
+    model_live: "Live 模型",
+    model_text: "提示词优化",
+
+    // General Tab
+    openSource: "开源代码",
+    openSourceDesc: "基于 MIT 协议发布。永久开源免费。",
+    clearData: "清除数据",
+    clearDataDesc: "重置所有参数并清除本地存储数据。",
+    clearDataConfirm: "确认要清除所有数据并重置应用吗？此操作无法撤销。",
 
     // Errors
     error_quota_exhausted: "您的今日配额已用完。您可以设置 Hugging Face 令牌以获取更多配额。",
@@ -313,6 +514,14 @@ export const translations = {
     error_prompt_optimization_failed: "优化提示词失败，请重试。",
     error_upscale_failed: "图片放大失败。",
     error_translation_failed: "翻译失败，将使用原始提示词继续。",
+    error_s3_upload_failed: "S3 上传失败，请检查配置。",
+    error_s3_config_missing: "S3 配置缺失。请设置访问密钥 ID 和访问密钥。",
+    error_s3_delete_failed: "S3 删除失败。",
+    error_webdav_upload_failed: "WebDAV 上传失败。",
+    error_webdav_config_missing: "WebDAV 配置缺失。",
+    error_webdav_delete_failed: "WebDAV 删除失败。",
+    error_storage_config_missing: "存储配置缺失。",
+    error_rename_failed: "重命名文件失败。",
 
     // FAQ
     faq_q1: "这个服务是免费的吗？",
@@ -336,9 +545,11 @@ export const translations = {
     faq_q7: "提示词优化是如何工作的？",
     faq_a7: "我们使用强大的 LLM 将您简短的想法扩展为详细、富有艺术感的提示词。根据服务商的不同，我们会调用 DeepSeek 或 OpenAI 等模型。您可以在“设置”菜单的“提示词”选项卡中自定义“角色设定”，以控制 AI 重写提示词的方式。",
     faq_q8: "Live 图生成原理是什么？",
-    faq_a8: "Live 功能利用先进的图生视频模型（如 Wan2.2），将静态图片转化为动态短视频。AI 会分析画面构图，生成自然的运动轨迹和电影级特效，赋予您的作品生命力。目前仅 Hugging Face 与 Gitee AI 支持。",
+    faq_a8: "Live 功能利用先进的图生视频模型（如 Wan2.2），将静态图片转化为动态短视频。AI 会分析画面构图，生成自然的运动轨迹和电影级特效，赋予您的作品生命力。目前仅 Hugging Face 与 Gitee AI 支持。可以在设置页面滑动 Tab 栏查看更多设置。",
     faq_q9: "图片编辑功能是如何工作的？",
     faq_a9: "图片编辑器允许您利用 AI 修改现有图片。您可以在透明图层上绘画（使用画笔或矩形工具）来标注想要修改的区域，然后输入 AI 指令。系统会将您的涂鸦与原图合并，并发送给 Qwen-Image-Edit 模型进行处理。您还可以上传最多 3 张参考图，以引导 AI 的艺术风格或内容生成。",
+    faq_q10: "云存储服务是如何工作的？",
+    faq_a10: "我们支持 S3 兼容的存储服务（如 AWS S3, Cloudflare R2, MinIO）以及 WebDAV。您可以在“设置 > 存储服务”中配置您的存储凭证。配置完成后，您可以将生成的图片或视频直接上传到您的私有云端。您的凭证仅保存在本地浏览器中，绝不会上传到我们的服务器。",
     footer_license: "基于 MIT 协议发布。永久开源免费。",
 
     // Aspect Ratios
@@ -362,7 +573,7 @@ export const translations = {
     upload_image_cta: "上传图片开始编辑",
     editor_placeholder: "添加未来的城市天际线...",
     editor_generate: "生成",
-    re_edit: "重新编辑",
+    re_edit: "返回",
 
     // New Editor Strings
     upload_ref_image: "上传参考图片",
@@ -376,8 +587,12 @@ export const translations = {
     menu_exit: "退出编辑",
 
     select_from_history: "从创作历史选择",
+    select_from_gallery: "从云端画廊选择",
     history_modal_title: "选择已生成图片",
+    gallery_modal_title: "选择云端图片",
     no_history_images: "历史记录中暂无已生成的图片。",
+    no_gallery_images: "云端存储中暂无图片。",
+    load_more: "加载更多",
 
     // Shortcuts
     shortcuts_title: "快捷键列表",
@@ -397,5 +612,30 @@ export const translations = {
     exit_dialog_title: "确认退出编辑?",
     exit_dialog_desc: "退出将清空当前画布和历史记录。是否确认？",
     or_conjunction: " 或 ",
+
+    // Comparison Labels
+    compare_original: "原图",
+    compare_upscaled: "超清放大",
+    compare_edited: "编辑后",
+
+    // Cloud Gallery
+    gallery_title: "您的作品",
+    gallery_subtitle: "探索您生成的杰作系列",
+    upload_media: "上传媒体",
+    cloud_gallery_empty: "暂无云端图片",
+    cloud_gallery_desc: "上传图片到云端后将在此显示。",
+
+    // Gallery Setup Guide
+    gallery_setup_title: "配置云端画廊",
+    gallery_setup_desc: "连接您的 S3 或 WebDAV 存储，随时随地查看您的创作。",
+    gallery_setup_btn: "配置存储服务",
+
+    share_link: "分享链接",
+    share_success: "链接已复制！",
+    delete_confirm: "确认要删除此文件吗？",
+    copy_prompt: "复制提示词",
+    toggle_nsfw: "标记为 NSFW",
+    mark_nsfw: "标记为 NSFW",
+    unmark_nsfw: "取消 NSFW 标记",
   }
 };

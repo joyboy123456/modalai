@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronsLeftRight } from 'lucide-react';
 
@@ -5,9 +6,17 @@ interface ImageComparisonProps {
   beforeImage: string;
   afterImage: string;
   alt: string;
+  labelBefore?: string;
+  labelAfter?: string;
 }
 
-export const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImage, afterImage, alt }) => {
+export const ImageComparison: React.FC<ImageComparisonProps> = ({ 
+    beforeImage, 
+    afterImage, 
+    alt, 
+    labelBefore = "Original", 
+    labelAfter = "After" 
+}) => {
   const [position, setPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -48,7 +57,7 @@ export const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImage, a
   return (
     <div className="w-full h-full flex items-center justify-center">
       <div 
-        className="relative inline-block max-w-full max-h-full select-none overflow-hidden"
+        className="relative inline-flex max-w-full max-h-full select-none overflow-hidden"
         style={{ touchAction: 'none' }} // Prevents scrolling on mobile while sliding
         ref={containerRef}
         onMouseDown={onMouseDown}
@@ -61,20 +70,16 @@ export const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImage, a
         {/* 
            Layout Strategy:
            1. 'After' image (Upscaled) is the Base. It sets the dimensions of the container 
-              naturally because it is position: static (default).
+              naturally because it is relative/static. We constrain it with max-w/max-h.
            2. 'Before' image (Original) is Absolute Overlay. It sits on top.
            3. We clip the 'Before' image from the right side.
-           
-           Result:
-           - Left Side of Slider: Shows Overlay (Before/Original).
-           - Right Side of Slider: Shows Base (After/Upscaled).
         */}
 
         {/* Base Layer: Upscaled Image (Visible on the Right) */}
         <img 
             src={afterImage} 
-            alt={`${alt} Upscaled`} 
-            className="block w-full h-full w-auto h-auto object-contain pointer-events-none" 
+            alt={`${alt} After`} 
+            className="block max-w-full max-h-full w-auto h-auto object-contain pointer-events-none" 
             draggable={false}
         />
 
@@ -85,7 +90,7 @@ export const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImage, a
         >
             <img 
                 src={beforeImage} 
-                alt={`${alt} Original`} 
+                alt={`${alt} Before`} 
                 className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
                 draggable={false}
             />
@@ -105,12 +110,12 @@ export const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImage, a
         <div 
             className={`absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white/90 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded border border-white/10 z-10 pointer-events-none transition-opacity duration-300 ${position < 15 ? 'opacity-0' : 'opacity-100'}`}
         >
-            Original
+            {labelBefore}
         </div>
         <div 
             className={`absolute top-3 right-3 bg-purple-600/90 backdrop-blur-md text-white text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded border border-white/10 z-10 pointer-events-none transition-opacity duration-300 ${position > 85 ? 'opacity-0' : 'opacity-100'}`}
         >
-            Upscaled 4x
+            {labelAfter}
         </div>
       </div>
     </div>

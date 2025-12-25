@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, memo } from "react"
 import { generateImage, upscaleImage, decomposeImage, type LayerResult } from "./services/modalService"
-import { translatePrompt } from "./services/utils"
 import type { GeneratedImage, AspectRatioOption, ModelOption } from "./types"
 import { HistoryGallery } from "./components/HistoryGallery"
 import { SettingsModal } from "./components/SettingsModal"
@@ -41,16 +40,14 @@ export default function App() {
   const [steps, setSteps] = useState(9)
   const [seed, setSeed] = useState("")
   const [enableHD, setEnableHD] = useState(false)
-  const [autoTranslate, setAutoTranslate] = useState(true)
 
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isTranslating, setIsTranslating] = useState(false)
   const [isUpscaling, setIsUpscaling] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
   const [isDecomposing, setIsDecomposing] = useState(false)
   const [decomposedLayers, setDecomposedLayers] = useState<LayerResult[] | null>(null)
   const [showLayersModal, setShowLayersModal] = useState(false)
+  const [decomposedImageId, setDecomposedImageId] = useState<string | null>(null)
 
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [tempUpscaledImage, setTempUpscaledImage] = useState<string | null>(null)
@@ -126,18 +123,7 @@ export default function App() {
     startTimer()
 
     try {
-      let finalPrompt = prompt.trim()
-
-      // Auto translate Chinese to English
-      if (autoTranslate && /[\u4e00-\u9fa5]/.test(finalPrompt)) {
-        setIsTranslating(true)
-        try {
-          finalPrompt = await translatePrompt(finalPrompt)
-        } catch (e) {
-          console.warn("Translation failed, using original prompt")
-        }
-        setIsTranslating(false)
-      }
+      const finalPrompt = prompt.trim()
 
       const parsedSeed = seed ? Number.parseInt(seed, 10) : undefined
       const result = await generateImage(finalPrompt, aspectRatio, parsedSeed, steps, enableHD)
@@ -159,10 +145,9 @@ export default function App() {
       setError(e.message || t.generationFailed)
     } finally {
       setIsGenerating(false)
-      setIsTranslating(false)
       stopTimer()
     }
-  }, [prompt, aspectRatio, model, enableHD, steps, seed, autoTranslate, isGenerating, t, elapsedTime])
+  }, [prompt, aspectRatio, model, enableHD, steps, seed, isGenerating, t, elapsedTime])
 
   const handleUpscale = useCallback(async () => {
     if (!generatedImage || isUpscaling || generatedImage.isUpscaled) return
@@ -202,19 +187,25 @@ export default function App() {
   const handleDecompose = useCallback(async () => {
     if (!generatedImage || isDecomposing) return
 
+    if (decomposedLayers && decomposedImageId === generatedImage.id) {
+      setShowLayersModal(true)
+      return
+    }
+
     setIsDecomposing(true)
     setError(null)
 
     try {
       const result = await decomposeImage(generatedImage.url, 4, 640)
       setDecomposedLayers(result.layers)
+      setDecomposedImageId(generatedImage.id)
       setShowLayersModal(true)
     } catch (e: any) {
       setError(e.message || "图层分解失败")
     } finally {
       setIsDecomposing(false)
     }
-  }, [generatedImage, isDecomposing])
+  }, [generatedImage, isDecomposing, decomposedLayers, decomposedImageId])
 
   const handleDownloadLayer = useCallback((layer: LayerResult) => {
     const link = document.createElement("a")
@@ -223,16 +214,23 @@ export default function App() {
     link.click()
   }, [])
 
-  const handleLoadFromHistory = useCallback((image: GeneratedImage) => {
-    setGeneratedImage(image)
-    setPrompt(image.prompt)
-    setAspectRatio(image.aspectRatio as AspectRatioOption)
-    if (image.steps) setSteps(image.steps)
-    if (image.seed) setSeed(image.seed.toString())
-    setTempUpscaledImage(null)
-    setIsComparing(false)
-    setShowInfo(false)
-  }, [])
+  const handleLoadFromHistory = useCallback(
+    (image: GeneratedImage) => {
+      setGeneratedImage(image)
+      setPrompt(image.prompt)
+      setAspectRatio(image.aspectRatio as AspectRatioOption)
+      if (image.steps) setSteps(image.steps)
+      if (image.seed) setSeed(image.seed.toString())
+      setTempUpscaledImage(null)
+      setIsComparing(false)
+      setShowInfo(false)
+      if (image.id !== decomposedImageId) {
+        setDecomposedLayers(null)
+        setDecomposedImageId(null)
+      }
+    },
+    [decomposedImageId],
+  )
 
   const handleClearHistory = useCallback(() => {
     setHistory([])
@@ -241,14 +239,14 @@ export default function App() {
 
   const handleDownload = useCallback(async () => {
     if (!generatedImage) return
-    setIsDownloading(true)
+    setIsUpscaling(true)
     try {
       const link = document.createElement("a")
       link.href = generatedImage.url
       link.download = `peinture-${generatedImage.id}.png`
       link.click()
     } finally {
-      setIsDownloading(false)
+      setIsUpscaling(false)
     }
   }, [generatedImage])
 
@@ -275,21 +273,14 @@ export default function App() {
   }, [generatedImage])
 
   return (
-    <div className="min-h-screen bg-gradient-brilliant">
+    <div className="min-h-screen bg-background-muted">
       <MemoizedHeader onOpenSettings={() => setShowSettings(true)} onOpenFAQ={() => setShowFAQ(true)} t={t} />
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8">
           {/* Left Panel */}
-          <div className="space-y-4 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-5">
-            <PromptInput
-              prompt={prompt}
-              setPrompt={setPrompt}
-              autoTranslate={autoTranslate}
-              setAutoTranslate={setAutoTranslate}
-              isTranslating={isTranslating}
-              t={t}
-            />
+          <div className="space-y-6 bg-card rounded-xl border border-border p-6 shadow-sm h-fit">
+            <PromptInput prompt={prompt} setPrompt={setPrompt} t={t} />
 
             <ControlPanel
               model={model}
@@ -306,15 +297,16 @@ export default function App() {
               aspectRatioOptions={ASPECT_RATIO_OPTIONS}
             />
 
+            {/* Button */}
             <Button
               onClick={handleGenerate}
               disabled={!prompt.trim() || isGenerating}
-              className="w-full h-12 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 shadow-lg shadow-purple-900/30"
+              className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary-hover text-primary-foreground border-0 shadow-sm"
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  {isTranslating ? t.translating : t.dreaming}
+                  {t.dreaming}
                 </>
               ) : (
                 <>
@@ -333,7 +325,6 @@ export default function App() {
             <PreviewStage
               currentImage={generatedImage}
               isWorking={isGenerating}
-              isTranslating={isTranslating}
               elapsedTime={elapsedTime}
               error={error}
               onCloseError={() => setError(null)}
@@ -353,7 +344,7 @@ export default function App() {
                 showInfo={showInfo}
                 setShowInfo={setShowInfo}
                 isUpscaling={isUpscaling}
-                isDownloading={isDownloading}
+                isDownloading={false}
                 isDecomposing={isDecomposing}
                 handleUpscale={handleUpscale}
                 handleDecompose={handleDecompose}
@@ -375,13 +366,15 @@ export default function App() {
 
       {/* Layers Modal */}
       {showLayersModal && decomposedLayers && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl max-h-[90vh] m-4 bg-gray-900/95 rounded-2xl border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white">{t.decompose} - {decomposedLayers.length} 个图层</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl max-h-[90vh] m-4 bg-card rounded-xl border border-border shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">
+                {t.decompose} - {decomposedLayers.length} 个图层
+              </h2>
               <button
                 onClick={() => setShowLayersModal(false)}
-                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -389,18 +382,21 @@ export default function App() {
             <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {decomposedLayers.map((layer) => (
-                  <div key={layer.index} className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10">
+                  <div
+                    key={layer.index}
+                    className="group relative rounded-lg overflow-hidden bg-muted border border-border"
+                  >
                     <img
-                      src={layer.image}
+                      src={layer.image || "/placeholder.svg"}
                       alt={`Layer ${layer.index + 1}`}
-                      className="w-full aspect-square object-contain bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImNoZWNrZXIiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3QgZmlsbD0iIzMzMyIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgZmlsbD0iIzMzMyIgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCBmaWxsPSIjMjIyIiB4PSIxMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgZmlsbD0iIzIyMiIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNjaGVja2VyKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')]"
+                      className="w-full aspect-square object-contain bg-checkerboard"
                     />
-                    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-foreground/80 to-transparent">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-white/80">图层 {layer.index + 1}</span>
+                        <span className="text-sm text-primary-foreground">图层 {layer.index + 1}</span>
                         <button
                           onClick={() => handleDownloadLayer(layer)}
-                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg bg-card/80 hover:bg-card text-foreground transition-colors"
                         >
                           <Download className="w-4 h-4" />
                         </button>

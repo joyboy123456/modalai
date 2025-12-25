@@ -68,7 +68,8 @@ export const generateImage = async (
   })
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), enableHD ? 180000 : 120000)
+  // 5 minutes for cold start, 3 minutes for HD mode, 2 minutes for normal
+  const timeoutId = setTimeout(() => controller.abort(), enableHD ? 300000 : 300000)
 
   try {
     const response = await fetch(endpoint, {

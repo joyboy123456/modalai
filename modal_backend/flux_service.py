@@ -133,14 +133,14 @@ class ZImageService:
                 return JSONResponse({"error": "GPU out of memory. Try smaller resolution."}, status_code=500)
 
             buffer = io.BytesIO()
-            result.save(buffer, format="JPEG", quality=92)
+            result.save(buffer, format="PNG")
             img_base64 = base64.b64encode(buffer.getvalue()).decode()
 
             del result
             torch.cuda.empty_cache()
 
             return {
-                "image": f"data:image/jpeg;base64,{img_base64}",
+                "image": f"data:image/png;base64,{img_base64}",
                 "seed": seed,
                 "width": width,
                 "height": height,

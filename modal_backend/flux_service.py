@@ -23,7 +23,7 @@ base_image = (
         "numpy<2",
         "torch==2.4.0",
         "torchvision==0.19.0",
-        "diffusers==0.30.0",
+        "git+https://github.com/huggingface/diffusers",
         "transformers>=4.51.3",
         "accelerate",
         "safetensors",

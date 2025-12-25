@@ -29,11 +29,10 @@ base_image = (
         "safetensors",
         "sentencepiece",
         "fastapi[standard]",
-        "realesrgan",
         "opencv-python-headless",
-        "basicsr==1.4.2",
-        "gfpgan",
         "python-pptx",
+        "pillow",
+        "git+https://github.com/ai-forever/Real-ESRGAN.git",
     )
 )
 
@@ -149,10 +148,8 @@ class ZImageService:
 
         @fastapi_app.post("/upscale")
         def upscale(request: dict):
-            import numpy as np
             from PIL import Image
-            from realesrgan import RealESRGANer
-            from basicsr.archs.rrdbnet_arch import RRDBNet
+            from RealESRGAN import RealESRGAN
 
             image_data = request.get("image", "")
             scale = request.get("scale", 4)
@@ -160,6 +157,7 @@ class ZImageService:
             if not image_data:
                 return JSONResponse({"error": "Image is required"}, status_code=400)
             
+            # ai-forever/Real-ESRGAN supports scale 2, 4, 8
             scale = 4 if scale >= 3 else 2
             
             try:
@@ -167,36 +165,28 @@ class ZImageService:
                     image_data = image_data.split(",")[1]
                 img_bytes = base64.b64decode(image_data)
                 img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-                img_np = np.array(img)
                 
                 original_size = img.size
                 print(f"Upscaling: {original_size[0]}x{original_size[1]} -> {original_size[0]*scale}x{original_size[1]*scale}")
                 
-                model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
-                upsampler = RealESRGANer(
-                    scale=4,
-                    model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
-                    model=model,
-                    tile=400,
-                    tile_pad=10,
-                    pre_pad=0,
-                    half=True,
-                    device="cuda",
-                )
+                # Use ai-forever/Real-ESRGAN implementation
+                device = torch.device('cuda')
+                model = RealESRGAN(device, scale=scale)
+                model.load_weights(f'weights/RealESRGAN_x{scale}.pth', download=True)
                 
-                output, _ = upsampler.enhance(img_np, outscale=scale)
-                result = Image.fromarray(output)
+                result = model.predict(img)
+                
                 buffer = io.BytesIO()
-                result.save(buffer, format="JPEG", quality=92)
+                result.save(buffer, format="PNG")
                 img_base64 = base64.b64encode(buffer.getvalue()).decode()
                 
                 new_size = result.size
-                del upsampler, model, output, result
+                del model, result
                 torch.cuda.empty_cache()
                 gc.collect()
                 
                 return {
-                    "image": f"data:image/jpeg;base64,{img_base64}",
+                    "image": f"data:image/png;base64,{img_base64}",
                     "original_width": original_size[0],
                     "original_height": original_size[1],
                     "width": new_size[0],
@@ -207,6 +197,8 @@ class ZImageService:
             except Exception as e:
                 torch.cuda.empty_cache()
                 gc.collect()
+                import traceback
+                traceback.print_exc()
                 return JSONResponse({"error": f"Upscale failed: {str(e)}"}, status_code=500)
 
         return fastapi_app

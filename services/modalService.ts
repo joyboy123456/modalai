@@ -3,9 +3,9 @@ import { generateUUID } from "./utils"
 
 // API 端点 - 直接调用 Modal
 const MODAL_ENDPOINTS = {
-  generate: "https://joyboyjoyboy488-53207--z-image-service-zimageservice-generate.modal.run",
-  upscale: "https://joyboyjoyboy488-53207--z-image-service-zimageservice-upscale.modal.run",
-  decompose: "https://joyboyjoyboy488-53207--z-image-service-layeredservice-decompose.modal.run",
+  generate: "https://joyboyjoyboy488-53207--z-image-service-zimageservice-serve.modal.run/generate",
+  upscale: "https://joyboyjoyboy488-53207--z-image-service-zimageservice-serve.modal.run/upscale",
+  decompose: "https://joyboyjoyboy488-53207--z-image-service-layeredservice-serve.modal.run/decompose",
 }
 
 export const getModalEndpoint = (): string => {

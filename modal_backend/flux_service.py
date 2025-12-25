@@ -32,7 +32,7 @@ base_image = (
         "opencv-python-headless",
         "python-pptx",
         "pillow",
-        "git+https://github.com/ai-forever/Real-ESRGAN.git",
+        "spandrel",
     )
 )
 
@@ -148,8 +148,11 @@ class ZImageService:
 
         @fastapi_app.post("/upscale")
         def upscale(request: dict):
+            import numpy as np
             from PIL import Image
-            from RealESRGAN import RealESRGAN
+            import spandrel
+            import urllib.request
+            import os
 
             image_data = request.get("image", "")
             scale = request.get("scale", 4)
@@ -157,8 +160,7 @@ class ZImageService:
             if not image_data:
                 return JSONResponse({"error": "Image is required"}, status_code=400)
             
-            # ai-forever/Real-ESRGAN supports scale 2, 4, 8
-            scale = 4 if scale >= 3 else 2
+            scale = 4  # Real-ESRGAN x4plus is 4x only
             
             try:
                 if image_data.startswith("data:"):
@@ -169,19 +171,38 @@ class ZImageService:
                 original_size = img.size
                 print(f"Upscaling: {original_size[0]}x{original_size[1]} -> {original_size[0]*scale}x{original_size[1]*scale}")
                 
-                # Use ai-forever/Real-ESRGAN implementation
-                device = torch.device('cuda')
-                model = RealESRGAN(device, scale=scale)
-                model.load_weights(f'weights/RealESRGAN_x{scale}.pth', download=True)
+                # Download model if not exists
+                model_path = "/tmp/RealESRGAN_x4plus.pth"
+                if not os.path.exists(model_path):
+                    print("Downloading Real-ESRGAN model...")
+                    urllib.request.urlretrieve(
+                        "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+                        model_path
+                    )
+                    print("Model downloaded!")
                 
-                result = model.predict(img)
+                # Load model with spandrel (universal model loader)
+                model = spandrel.ModelLoader().load_from_file(model_path).eval().cuda()
+                
+                # Convert image to tensor
+                img_np = np.array(img).astype(np.float32) / 255.0
+                img_tensor = torch.from_numpy(img_np).permute(2, 0, 1).unsqueeze(0).cuda()
+                
+                # Process image
+                with torch.inference_mode():
+                    output = model(img_tensor)
+                
+                # Convert back to image
+                output_np = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
+                output_np = (output_np * 255).clip(0, 255).astype(np.uint8)
+                result = Image.fromarray(output_np)
                 
                 buffer = io.BytesIO()
                 result.save(buffer, format="PNG")
                 img_base64 = base64.b64encode(buffer.getvalue()).decode()
                 
                 new_size = result.size
-                del model, result
+                del model, output, result, img_tensor
                 torch.cuda.empty_cache()
                 gc.collect()
                 
@@ -195,10 +216,10 @@ class ZImageService:
                 }
                 
             except Exception as e:
-                torch.cuda.empty_cache()
-                gc.collect()
                 import traceback
                 traceback.print_exc()
+                torch.cuda.empty_cache()
+                gc.collect()
                 return JSONResponse({"error": f"Upscale failed: {str(e)}"}, status_code=500)
 
         return fastapi_app

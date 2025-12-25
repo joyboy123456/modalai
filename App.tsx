@@ -80,10 +80,24 @@ export default function App() {
     localStorage.setItem("app_language", lang)
   }, [lang])
 
-  // Save history
+  // Save history (limit to 20 items to avoid localStorage quota)
   useEffect(() => {
     if (history.length > 0) {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+      try {
+        // Keep only the latest 20 items
+        const limitedHistory = history.slice(0, 20)
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(limitedHistory))
+      } catch (e) {
+        // If quota exceeded, clear old history and try again
+        console.warn("localStorage quota exceeded, clearing old history")
+        try {
+          const limitedHistory = history.slice(0, 10)
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(limitedHistory))
+        } catch {
+          // If still fails, clear all history from storage
+          localStorage.removeItem(HISTORY_KEY)
+        }
+      }
     }
   }, [history])
 

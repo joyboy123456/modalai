@@ -229,8 +229,27 @@ class ZImageService:
 # Qwen-Image-Layered Service
 # ============================================
 
+# Separate image for LayeredService with python-pptx dependency
+layered_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .apt_install("git", "libgl1", "libglib2.0-0")
+    .pip_install(
+        "numpy<2",
+        "torch==2.5.1",
+        "torchvision==0.20.1",
+        "git+https://github.com/huggingface/diffusers",
+        "transformers>=4.51.3",
+        "accelerate",
+        "safetensors",
+        "sentencepiece",
+        "fastapi[standard]",
+        "pillow",
+        "python-pptx",  # Required by QwenImageLayeredPipeline
+    )
+)
+
 @app.cls(
-    image=base_image,
+    image=layered_image,
     gpu="A100-80GB",
     timeout=900,
     scaledown_window=300,
@@ -276,18 +295,24 @@ class LayeredService:
             allow_headers=["*"],
         )
 
+        @fastapi_app.get("/health")
+        def health():
+            return {"status": "ok", "model": "qwen-image-layered"}
+
         @fastapi_app.post("/decompose")
         def decompose(request: dict):
             image_data = request.get("image", "")
-            num_layers = request.get("layers", 3)
-            resolution = request.get("resolution", 512)
+            num_layers = request.get("layers", 4)
+            resolution = request.get("resolution", 640)
             seed = request.get("seed")
             
             if not image_data:
                 return JSONResponse({"error": "Image is required"}, status_code=400)
             
-            num_layers = max(2, min(num_layers, 5))
-            resolution = min(resolution, 640)
+            # Clamp layers between 2-8 (model supports variable layers)
+            num_layers = max(2, min(num_layers, 8))
+            # Resolution bucket: 640 recommended, 1024 also supported
+            resolution = 640 if resolution <= 640 else 1024
             
             try:
                 if image_data.startswith("data:"):
@@ -295,6 +320,7 @@ class LayeredService:
                 img_bytes = base64.b64decode(image_data)
                 img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
                 
+                # Resize if too large
                 max_input_size = 1024
                 if max(img.size) > max_input_size:
                     ratio = max_input_size / max(img.size)
@@ -326,8 +352,10 @@ class LayeredService:
                         use_en_prompt=True,
                     )
                 
+                # output.images[0] is a list of layer images
                 layers_base64 = []
-                for i, layer_img in enumerate(output.images[0]):
+                layer_images = output.images[0]
+                for i, layer_img in enumerate(layer_images):
                     buffer = io.BytesIO()
                     layer_img.save(buffer, format="PNG")
                     layer_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -338,7 +366,7 @@ class LayeredService:
                         "height": layer_img.height,
                     })
                 
-                del output
+                del output, layer_images
                 torch.cuda.empty_cache()
                 gc.collect()
                 

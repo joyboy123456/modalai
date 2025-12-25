@@ -11,7 +11,7 @@ import {
   LucideCheck,
   LucideLoader2,
 } from "lucide-react"
-import { Icon4x as CustomIcon4x } from "./Icons"
+import { Icon4x as CustomIcon4x, IconLayers } from "./Icons"
 import { Tooltip } from "./Tooltip"
 import type { GeneratedImage } from "../types"
 
@@ -22,7 +22,9 @@ interface ImageToolbarProps {
   setShowInfo: (val: boolean) => void
   isUpscaling: boolean
   isDownloading: boolean
+  isDecomposing: boolean
   handleUpscale: () => void
+  handleDecompose: () => void
   handleToggleBlur: () => void
   handleDownload: () => void
   handleDelete: () => void
@@ -38,7 +40,9 @@ export const ImageToolbar: React.FC<ImageToolbarProps> = ({
   setShowInfo,
   isUpscaling,
   isDownloading,
+  isDecomposing,
   handleUpscale,
+  handleDecompose,
   handleToggleBlur,
   handleDownload,
   handleDelete,
@@ -94,6 +98,21 @@ export const ImageToolbar: React.FC<ImageToolbarProps> = ({
                   <LucideLoader2 className="w-5 h-5 animate-spin text-purple-400" />
                 ) : (
                   <CustomIcon4x className="w-5 h-5 transition-colors duration-300" />
+                )}
+              </button>
+            </Tooltip>
+
+            {/* Decompose Button */}
+            <Tooltip content={isDecomposing ? t.decomposing : t.decompose}>
+              <button
+                onClick={handleDecompose}
+                disabled={isDecomposing}
+                className="flex items-center justify-center w-10 h-10 rounded-xl transition-all text-white/70 hover:text-cyan-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDecomposing ? (
+                  <LucideLoader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                ) : (
+                  <IconLayers className="w-5 h-5 transition-colors duration-300" />
                 )}
               </button>
             </Tooltip>

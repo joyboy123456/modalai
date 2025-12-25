@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, memo } from "react"
-import { generateImage, upscaleImage } from "./services/modalService"
+import { generateImage, upscaleImage, decomposeImage, type LayerResult } from "./services/modalService"
 import { translatePrompt } from "./services/utils"
 import type { GeneratedImage, AspectRatioOption, ModelOption } from "./types"
 import { HistoryGallery } from "./components/HistoryGallery"
@@ -9,7 +9,7 @@ import { SettingsModal } from "./components/SettingsModal"
 import { FAQModal } from "./components/FAQModal"
 import { translations, type Language } from "./translations"
 import { Header } from "./components/Header"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2, X, Download } from "lucide-react"
 import { getModelConfig } from "./constants"
 import { ControlPanel } from "./components/ControlPanel"
 import { PreviewStage } from "./components/PreviewStage"
@@ -48,6 +48,9 @@ export default function App() {
   const [isUpscaling, setIsUpscaling] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
+  const [isDecomposing, setIsDecomposing] = useState(false)
+  const [decomposedLayers, setDecomposedLayers] = useState<LayerResult[] | null>(null)
+  const [showLayersModal, setShowLayersModal] = useState(false)
 
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [tempUpscaledImage, setTempUpscaledImage] = useState<string | null>(null)
@@ -196,6 +199,30 @@ export default function App() {
     setIsComparing(false)
   }, [])
 
+  const handleDecompose = useCallback(async () => {
+    if (!generatedImage || isDecomposing) return
+
+    setIsDecomposing(true)
+    setError(null)
+
+    try {
+      const result = await decomposeImage(generatedImage.url, 4, 640)
+      setDecomposedLayers(result.layers)
+      setShowLayersModal(true)
+    } catch (e: any) {
+      setError(e.message || "图层分解失败")
+    } finally {
+      setIsDecomposing(false)
+    }
+  }, [generatedImage, isDecomposing])
+
+  const handleDownloadLayer = useCallback((layer: LayerResult) => {
+    const link = document.createElement("a")
+    link.href = layer.image
+    link.download = `layer-${layer.index + 1}.png`
+    link.click()
+  }, [])
+
   const handleLoadFromHistory = useCallback((image: GeneratedImage) => {
     setGeneratedImage(image)
     setPrompt(image.prompt)
@@ -327,7 +354,9 @@ export default function App() {
                 setShowInfo={setShowInfo}
                 isUpscaling={isUpscaling}
                 isDownloading={isDownloading}
+                isDecomposing={isDecomposing}
                 handleUpscale={handleUpscale}
+                handleDecompose={handleDecompose}
                 handleToggleBlur={handleToggleBlur}
                 handleDownload={handleDownload}
                 handleDelete={handleDelete}
@@ -343,6 +372,47 @@ export default function App() {
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} lang={lang} setLang={setLang} t={t} />
 
       <FAQModal isOpen={showFAQ} onClose={() => setShowFAQ(false)} t={t} />
+
+      {/* Layers Modal */}
+      {showLayersModal && decomposedLayers && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl max-h-[90vh] m-4 bg-gray-900/95 rounded-2xl border border-white/10 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h2 className="text-lg font-semibold text-white">{t.decompose} - {decomposedLayers.length} 个图层</h2>
+              <button
+                onClick={() => setShowLayersModal(false)}
+                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {decomposedLayers.map((layer) => (
+                  <div key={layer.index} className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10">
+                    <img
+                      src={layer.image}
+                      alt={`Layer ${layer.index + 1}`}
+                      className="w-full aspect-square object-contain bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImNoZWNrZXIiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3QgZmlsbD0iIzMzMyIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgZmlsbD0iIzMzMyIgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCBmaWxsPSIjMjIyIiB4PSIxMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgZmlsbD0iIzIyMiIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNjaGVja2VyKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')]"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/80">图层 {layer.index + 1}</span>
+                        <button
+                          onClick={() => handleDownloadLayer(layer)}
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

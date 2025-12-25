@@ -75,7 +75,7 @@ export const generateImage = async (
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, width, height, steps, seed: finalSeed }),
+      body: JSON.stringify({ prompt, width, height, steps, seed: finalSeed, save: true }),
       signal: controller.signal,
     })
 
@@ -93,9 +93,12 @@ export const generateImage = async (
 
     if (!data.image) throw new Error("error_invalid_response")
 
+    // Prefer URL over base64 for storage efficiency
+    const imageUrl = data.url || data.image
+
     return {
-      id: generateUUID(),
-      url: data.image,
+      id: data.image_id || generateUUID(),
+      url: imageUrl,
       model: "z-image-turbo",
       prompt,
       aspectRatio,

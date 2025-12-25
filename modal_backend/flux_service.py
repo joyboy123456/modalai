@@ -12,8 +12,14 @@ Deploy: modal deploy modal_backend/flux_service.py
 import modal
 import io
 import base64
+import uuid
+from datetime import datetime
 
 app = modal.App("z-image-service")
+
+# Create a Volume for storing images
+image_volume = modal.Volume.from_name("peinture-images", create_if_missing=True)
+VOLUME_PATH = "/images"
 
 # Base image with common dependencies
 base_image = (
@@ -42,6 +48,7 @@ base_image = (
     gpu="A10G",
     timeout=600,
     scaledown_window=120,
+    volumes={VOLUME_PATH: image_volume},
 )
 class ZImageService:
     def __init__(self):
@@ -93,13 +100,28 @@ class ZImageService:
         def health():
             return {"status": "ok", "model": "z-image-turbo"}
 
+        @fastapi_app.get("/images/{image_id}")
+        def get_image(image_id: str):
+            """Serve image from volume"""
+            from fastapi.responses import FileResponse
+            import os
+            
+            image_path = f"{VOLUME_PATH}/{image_id}.png"
+            if not os.path.exists(image_path):
+                return JSONResponse({"error": "Image not found"}, status_code=404)
+            
+            return FileResponse(image_path, media_type="image/png")
+
         @fastapi_app.post("/generate")
         def generate(request: dict):
+            import os
+            
             prompt = request.get("prompt", "")
             width = request.get("width", 1024)
             height = request.get("height", 1024)
             steps = request.get("steps", 9)
             seed = request.get("seed")
+            save_to_volume = request.get("save", True)  # Save to volume by default
 
             if not prompt:
                 return JSONResponse({"error": "Prompt is required"}, status_code=400)
@@ -131,6 +153,24 @@ class ZImageService:
                 gc.collect()
                 return JSONResponse({"error": "GPU out of memory. Try smaller resolution."}, status_code=500)
 
+            # Generate unique image ID
+            image_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            
+            # Save to volume if requested
+            image_url = None
+            if save_to_volume:
+                try:
+                    os.makedirs(VOLUME_PATH, exist_ok=True)
+                    image_path = f"{VOLUME_PATH}/{image_id}.png"
+                    result.save(image_path, format="PNG")
+                    image_volume.commit()
+                    # Return URL to the image endpoint
+                    image_url = f"https://joyboyjoyboy488-53207--z-image-service-zimageservice-serve.modal.run/images/{image_id}"
+                    print(f"Image saved: {image_id}")
+                except Exception as e:
+                    print(f"Failed to save image: {e}")
+            
+            # Also return base64 for backward compatibility
             buffer = io.BytesIO()
             result.save(buffer, format="PNG")
             img_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -138,13 +178,19 @@ class ZImageService:
             del result
             torch.cuda.empty_cache()
 
-            return {
+            response = {
                 "image": f"data:image/png;base64,{img_base64}",
                 "seed": seed,
                 "width": width,
                 "height": height,
                 "steps": steps,
             }
+            
+            if image_url:
+                response["url"] = image_url
+                response["image_id"] = image_id
+
+            return response
 
         @fastapi_app.post("/upscale")
         def upscale(request: dict):

@@ -165,9 +165,9 @@ export const decomposeImage = async (
   resolution = 640,
   seed?: number,
 ): Promise<{ layers: LayerResult[]; seed: number }> => {
-  // Use AbortController for timeout (5 minutes for cold start)
+  // Use AbortController for timeout (10 minutes for cold start + processing + large response)
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 300000)
+  const timeoutId = setTimeout(() => controller.abort(), 600000)
 
   // Log request size for debugging
   const requestBody = JSON.stringify({
